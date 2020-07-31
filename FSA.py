@@ -1,109 +1,111 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3.7
 # coding: utf8
 
-import StateMachine as sm
+import random
+import os
+import csv
+from functools import reduce
 
-def doNothing(ctx, symbol, msg): #voir avec une lambda fonction
-	pass
+#==================================================
+#============ Tools ===============================
+#==================================================
 
-STATE_STD = 0
-STATE_I = 1
-STATE_F = 2
-SYMBOL_EPSILON = ''
+def existFile(f):
+	return os.path.isfile(f)
+
+def existDir(d):
+	return os.path.exists(d)
+
+def choixAleatoire(l) :
+	if len(f) == 0 :
+		return None
+	elif len(l) == 1 :
+		return l[0]
+	else :
+		return random.choice(l)
 
 #==================================================
 #==================================================
 
-class State:
-	def __init__(self, name, status = STATE_STD, action_in = doNothing, action_out = doNothing):
-		self.name = name
-		self.a_in = action_in
-		self.a_out = action_out
-		self.status = status
-
-	def isInitial(self):
-		return self.status in [1,3]
-
-	def isFinal(self):
-		return self.status in [2,3]
-
-#==================================================
-
-class InitialState(State):
-	def __init__(self, name, action_in = doNothing, action_out = doNothing):
-		State.__init__(self, name, status = STATE_I, action_in = doNothing, action_out = doNothing)
-
-#==================================================
-
-class FinalState(State):
-	def __init__(self, name, action_in = doNothing, action_out = doNothing):
-		State.__init__(self, name, status = STATE_F, action_in = doNothing, action_out = doNothing)
-
-#==================================================
-
-class InitialFinalState(State):
-	def __init__(self, name, action_in = doNothing, action_out = doNothing):
-		State.__init__(self, name, status = STATE_F+STATE_I, action_in = doNothing, action_out = doNothing)
-
-#==================================================
-#==================================================
-
-class Transition:
-	def __init__(self, symbol, sin, sout, action = doNothing):
-		self.s_in = sin
-		self.s_out = sout
-		self.action = action
-		self.symbol = symbol
-
-	def isEpsilon(self):
-		return self.symbol == SYMBOL_EPSILON
-
-#==================================================
-
-class EpsilonTransition(Transition):
-	def __init__(self, sin, sout, action = doNothing):
-		Transition.__init__(self, SYMBOL_EPSILON,sin, sout, action = doNothing)
-
-#==================================================
-#==================================================
-
-class FSA(sm.StateMachine):
-	def __init__(self,A,Q, I, F, mu, ctx):
+class FSA(object):
+	def __init__(self,A,Q, I, F, mu):
 		self.A = A # set() of String or integers
 		self.Q = Q # set() of States
-		assert I in Q, 'Initial state is not a state'
-		self.I =  I #None
-		assert Q >= F, 'Final states are not a states'
+		assert reduce(lambda x,y: x and y, [i in Q for i in I]) , 'Initial state is not a state'
+		self.I = I
+		assert reduce(lambda x,y: x and y, [f in Q for f in F]), 'Final states are not a states'
 		self.F = F # set()
 		self._mu = dict()
-		for t in mu:
-			assert t.symbol in self.A and t.s_in in self.Q and t.s_out in self.Q
-			entry = self._toEntry(t.symbol, t.s_in)
-			if entry in self._mu: self._mu[entry].append(t)
-			else: self._mu[entry] = [t]
-		self.mu = mu # set{} # faire un dict sur le nom de l'état de départ concaténé au symbol
-		self.currentState = I
-		self.ctx = ctx
+		det = True
+		for t in mu :
+			(s,a,c) = t
+			assert ((a in self.A) or (a is None)) and s in self.Q and c in self.Q, "Transition error"
+			if (s,a) in self._mu: 
+				self._mu[(s, a)].append(t)
+				det = False
+			else: self._mu[(s, a)] = [t]
+			if a is None: det = False
+		self.mu = mu
+		self.currentState = None
+		self.isDeterministic = det and (len(self.I)==1)
+		self.trace = None
+		self.time = 0
+		self.mem = None
+		self.init()
 
-	def _toEntry(self, symbol, state):
-		return str(symbol)+'-@->'+str(state.name)
+	def init(self) :
+		self.trace = list()
+		self.time = 0
+		self.mem = list()
+		self.currentState = self.I[0]
+		self.mem.append( (0, None, None, self.currentState) )
 
-	def next(self, symbol):
-		s = self._mu[self._toEntry(symbol, self.currentState)]
-		return s # { t.s_out for t in s}
-
-	def do(self,t, symbol, msg):
-		a = self.currentState.a_out(self.ctx, symbol, msg)
-		b = t.action(self.ctx, symbol, msg)
-		self.currentState = t.s_out
-		c = self.currentState.a_in(self.ctx, symbol, msg)
-		return (a, b, c)
-
-	def applyDet(self, symbol, msg = None): #Suppose a deterministic FSM
-		assert symbol in self.A, 'Unkown symbol'
-		s = self.next(symbol)
-		t = s[0]
-		return self.do(t, symbol, msg)
+	def run(self, word):
+		pass
+		# word.reverse()
+		# ok = True
+		# while not ( (len(word)==0) and self.end()  ) and ok :
+		# 	if len(word)>0:
+		# 		symbol = word.pop()
+		# 	else symbol = None
+		# 	if (self.currentState, symbol) in self._mu :
+		# 		lt = self._mu[(self.currentState, symbol)]
+		# 		self.time += 1
+		# 		(s,a,c) = lt[0]
+		# 		self.mem.append( (self.time, s, a, c) )
+		# 		self.currentState = c
+		# 		print(s,a,c)
+		# 	else :
+		# 		ok = False
+		# 		word.append(symbol)
+		# 		while (not ok) and (len(self.mem)>0) :
+		# 			(d, symbol, a, c) = self.mem.pop()
+		# 			if d>0 :
+		# 				lt = self._mu( (symbol,a) )
+		# 				i = lt.index[ (symbol,a,c) ]
+		# 				if i < len(lt)-1 :
+		# 					ok = True
+		# 					self.time = d
+		# 					(a, symbol, c) = lt[i+1]
+		# 					self.mem.append( (self.time, symbol, a, c) )
+		# 					self.currentState = c
+		# 					print((a, symbol, c))
+		# 				else :
+		# 					word.append(symbol)
+		# 			else:
+		# 				i = self.I.index(c)
+		# 				if i < len(self.I)-1 :
+		# 					ok = True
+		# 					self.time = 0
+		# 					c = self.I[i+1]
+		# 					self.mem.append( (self.time, None, None, c) )
+		# 					self.currentState = c					
+		# 		if not ok :
+		# 			print('Echec')
+		# 			c = None
+		# 			break
+		# if ok and (len(word)==0) : print('Réussite')
+		# print('Fin')
 
 	def end(self):
 		return self.currentState in self.F
@@ -114,14 +116,18 @@ class FSA(sm.StateMachine):
 
 class FSD(FSA):
 	"""docstring for FSD"""
-	def __init__(self, A,Q, I, F, mu, ctx):
-		FSA.__init__(self,A,Q, I, F, mu, ctx)
+	def __init__(self, A,Q, I, F, mu):
+		FSA.__init__(self,A,Q, I, F, mu)
 		#assert deterinistic
 
 	def toMinimal(self): #TODO
 		pass
 
-	def toDeterministic(fsa): #TODO
+	def toDeterministic(self, fsa): #TODO
+		pass
+		
+
+	def run(self, word) :
 		pass
 		
 #==================================================
@@ -130,3 +136,6 @@ class FSD(FSA):
 
 if __name__ == '__main__':
 	print('main de FSA.py')
+	fsa = FSA(['a','b', 'c'], [1, 2, 3, 4, 5], [1], [5], [ (1,'a',3), (2,'b',3), (3,'c',4), (3,'c',5) ] )
+	fsa.run(['a','c'])
+
