@@ -48,87 +48,65 @@ class FSA(object):
 		self.mu = mu
 		self.currentState = None
 		self.isDeterministic = det and (len(self.I)==1)
-		self.trace = None
 		self.time = 0
 		self.mem = None
+		self.word = None
 		self.init()
 
 	def init(self) :
-		self.trace = list()
 		self.time = 0
-		self.mem = list()
 		self.currentState = self.I[0]
-		self.mem.append( (0, None, None, self.currentState) )
+		self.mem = list()
+		self.mem.append( (self.time, None, None, self.currentState) )
+		self.word=[]
 
 	def run(self, word):
 		pass
-		# word.reverse()
-		# ok = True
-		# while not ( (len(word)==0) and self.end()  ) and ok :
-		# 	if len(word)>0:
-		# 		symbol = word.pop()
-		# 	else symbol = None
-		# 	if (self.currentState, symbol) in self._mu :
-		# 		lt = self._mu[(self.currentState, symbol)]
-		# 		self.time += 1
-		# 		(s,a,c) = lt[0]
-		# 		self.mem.append( (self.time, s, a, c) )
-		# 		self.currentState = c
-		# 		print(s,a,c)
-		# 	else :
-		# 		ok = False
-		# 		word.append(symbol)
-		# 		while (not ok) and (len(self.mem)>0) :
-		# 			(d, symbol, a, c) = self.mem.pop()
-		# 			if d>0 :
-		# 				lt = self._mu( (symbol,a) )
-		# 				i = lt.index[ (symbol,a,c) ]
-		# 				if i < len(lt)-1 :
-		# 					ok = True
-		# 					self.time = d
-		# 					(a, symbol, c) = lt[i+1]
-		# 					self.mem.append( (self.time, symbol, a, c) )
-		# 					self.currentState = c
-		# 					print((a, symbol, c))
-		# 				else :
-		# 					word.append(symbol)
-		# 			else:
-		# 				i = self.I.index(c)
-		# 				if i < len(self.I)-1 :
-		# 					ok = True
-		# 					self.time = 0
-		# 					c = self.I[i+1]
-		# 					self.mem.append( (self.time, None, None, c) )
-		# 					self.currentState = c					
-		# 		if not ok :
-		# 			print('Echec')
-		# 			c = None
-		# 			break
-		# if ok and (len(word)==0) : print('Réussite')
-		# print('Fin')
 
-	def end(self):
-		return self.currentState in self.F
+	def end(self,word = None):
+		if word is None : word = self.word
+		return (len(word) == 0) and (self.currentState in self.F)
 
-	def isDeterministic(self): #TODO
-		return False
+	def isDeterministic(self):
+		return self.isDeterministic
 
 
 class FSD(FSA):
 	"""docstring for FSD"""
 	def __init__(self, A,Q, I, F, mu):
 		FSA.__init__(self,A,Q, I, F, mu)
-		#assert deterinistic
+		assert self.isDeterministic, "Automate non déterministe !"
 
 	def toMinimal(self): #TODO
 		pass
 
 	def toDeterministic(self, fsa): #TODO
 		pass
-		
+
+	def next(self, symbol) :
+		ok = True
+		if (self.currentState, symbol) in self._mu :
+			lt = self._mu[(self.currentState, symbol)]
+			self.time += 1
+			(s,a,c) = lt[0]
+			self.mem.append( (self.time, s, a, c) )
+			self.currentState = c
+		else :
+			ok = False
+		return ok
 
 	def run(self, word) :
-		pass
+		word.reverse()
+		self.word = word
+		ok = True
+		while ( not self.end() ) and ok :
+			if len(self.word)>0:
+				symbol = self.word.pop()
+				ok = self.next(symbol)
+			else : 
+				ok = False
+		if ok and self.end() : print('Réussite')
+		else : print('Echec')
 		
 #==================================================
 #==================================================
@@ -136,6 +114,6 @@ class FSD(FSA):
 
 if __name__ == '__main__':
 	print('main de FSA.py')
-	fsa = FSA(['a','b', 'c'], [1, 2, 3, 4, 5], [1], [5], [ (1,'a',3), (2,'b',3), (3,'c',4), (3,'c',5) ] )
+	fsa = FSD(['a','b', 'c'], [1, 2, 3, 4, 5], [1], [4], [ (1,'a',3), (2,'b',3), (3,'c',4), (3,'a',5) ] )
 	fsa.run(['a','c'])
 
