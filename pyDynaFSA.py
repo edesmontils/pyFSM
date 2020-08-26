@@ -59,24 +59,32 @@ class DynaFSD(FSD):
     def __init__(self):
         FSD.__init__(self)
         # self.F_In = [list() for i in range(self.nbt)]
-        self.F_Out = [list() for i in range(self.nbt)]
+        self.FT_Out = [list() for i in range(len(self.mu))]
+        self.FQ_Out = [list() for i in range(len(self.Q))]
+
+    def setQOutEvent(self, q, outEvt):
+        assert isinstance(outEvt, OutEvent), "[setOutEvent] mauvais type d'event"
+        if q in self.Q:
+            i = self.Q.index(q)
+            self.FQ_Out[i].append(outEvt)
+        else:
+            pass
+
+    def setTOutEvent(self, m, outEvt):
+        assert isinstance(outEvt, OutEvent), "[setOutEvent] mauvais type d'event"
+        if m in self.mu:
+            i = self.Q.index(m)
+            self.FT_Out[i].append(outEvt)
+        else:
+            pass
 
     def next(self, symbol) :
         ok = super().next(symbol)
         return ok
 
     def run(self, word) :
-        word.reverse()
-        self.word = word
-        ok = True
-        while ( not self.end() ) and ok :
-            if len(self.word)>0:
-                symbol = self.word.pop()
-                ok = self.next(symbol)
-            else : 
-                ok = False
-        if self.end() : print('Réussite')
-        else : print('Echec')
+        super().run(word)
+
         
 #==================================================
 #==================================================
