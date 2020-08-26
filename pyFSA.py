@@ -152,16 +152,16 @@ class FSD(FSA):
 		return ok
 
 	def run(self, word) :
-		word.reverse()
-		self.word = word
+		self.word = word.copy()
+		self.word.reverse()
 		ok = True
 		while ( not self.end() ) and ok :
 			if len(self.word)>0:
 				ok = self.next()
 			else : 
 				ok = False
-		if self.end() : print('ok')
-		else : print('ko')
+		if self.end() : print(word,' ok')
+		else : print(word,' ko')
 		
 #==================================================
 #==================================================
@@ -173,5 +173,5 @@ if __name__ == '__main__':
 	fsa.load(['a','b', 'c'], [1, 2, 3, 4, 5], [1], [4], [ (1,'a',3), (2,'b',3), (3,'c',4), (3,'a',5) ] )
 	fsa.run(['a','c'])
 
-	fsd = FSD()
-	fsd.loadJFLAP4File('ex.csv')
+	# fsd = FSD()
+	# fsd.loadJFLAP4File('ex.csv')
