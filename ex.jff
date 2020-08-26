@@ -34,7 +34,7 @@
 		<transition>
 			<from>2</from>
 			<to>3</to>
-			<read/>
+			<read>b</read>
 		</transition>
 		<transition>
 			<from>0</from>

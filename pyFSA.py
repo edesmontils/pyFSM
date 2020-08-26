@@ -62,33 +62,47 @@ class FSA(object):
 		self.isDeterministic = det and (len(self.I)==1)
 		self.init()
 
+	def test(self) :
+		pass
+
 	def loadJFLAP4File(self, f) :
-        if existFile(f) :
-
-            with open(f, newline='') as csvfile:
-                fsa = csv.DictReader(csvfile, delimiter=';')
-                for row in fsa:
-                    typeNode = row['type']
-                    if typeNode == 'state' :
-                        self.P.append(row['name'])
-                        self.M0.append(int(row['v1'])) # contenu de la place dans le marquage initial
-                    
-                    elif typeNode == 'transition' :
-                        self.T.append(row['name'])
-                        self.Pr.append(int(row['v1'])) # priorité de la transition
-                        source = row['v1']
-                        target = row['v2']
-                        w = row['v3']
-                        self.W.append(int(w))
-                        self.A.append( (source,target) )
-
-
-                self.init()
-                print('File loaded')
-                return True
-        else :
-            print('File ',f,' doesn''t exist')
-            return False
+		if existFile(f) :
+			self.A = list()
+			self.Q = list()
+			self.I = list()
+			self.F = list()
+			self.mu = list()
+			self._mu = dict()
+			det = True
+			with open(f, newline='') as csvfile:
+				fsa = csv.DictReader(csvfile, delimiter=';')
+				for row in fsa:
+					typeNode = row['type']
+					if typeNode == 'state' :
+						q = int(row['id'])
+						initial = row['v1'] == 'true'
+						final = row['v2'] == 'true'
+						self.Q.append(q)
+						if initial : self.I.append(q)
+						if final : self.F.append(q)
+					elif typeNode == 'transition' :
+						s = int(row['v1'])
+						c = int(row['v3'])
+						a = row['v2']
+						self.mu.append( ( s, a, c ) )
+						if a not in self.A : self.A.append( a )
+						if (s,a) in self._mu: 
+							self._mu[(s, a)].append(t)
+							det = False
+						else: self._mu[(s, a)] = [ (s,a,c) ]
+						if a is None: det = False
+			self.isDeterministic = det and (len(self.I)==1)
+			self.init()
+			print('File loaded')
+			return True
+		else :
+			print('File ',f,' doesn''t exist')
+			return False
 
 	def init(self) :
 		self.time = 0
@@ -115,7 +129,7 @@ class FSD(FSA):
 
 	def load(self,A,Q, I, F, mu):
 		super().load(A,Q, I, F, mu)
-		assert self.isDeterministic, "Automate non déterministe !"
+		assert self.isDeterministic, "FSA is not a determinic one !"
 
 	def toMinimal(self): #TODO
 		pass
@@ -146,8 +160,8 @@ class FSD(FSA):
 				ok = self.next()
 			else : 
 				ok = False
-		if self.end() : print('Réussite')
-		else : print('Echec')
+		if self.end() : print('ok')
+		else : print('ko')
 		
 #==================================================
 #==================================================
@@ -159,3 +173,5 @@ if __name__ == '__main__':
 	fsa.load(['a','b', 'c'], [1, 2, 3, 4, 5], [1], [4], [ (1,'a',3), (2,'b',3), (3,'c',4), (3,'a',5) ] )
 	fsa.run(['a','c'])
 
+	fsd = FSD()
+	fsd.loadJFLAP4File('ex.csv')

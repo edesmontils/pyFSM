@@ -13,8 +13,8 @@
     <xsl:template match="state">
         <xsl:variable name="id" select="@id"/>
         <xsl:variable name="name" select="@name"/>
-        <xsl:variable name='initial' select="./initial"/>
-        <xsl:variable name='final' select="./final"/>
+        <xsl:variable name='initial' select="count(./initial) = 1"/>
+        <xsl:variable name='final' select="count(./final) = 1"/>
         <xsl:value-of select="concat($id,';',$name,';state;',$initial,';',$final,';',$nl)"/>
     </xsl:template>
     <xsl:template match="transition">
