@@ -58,17 +58,11 @@ class DynaFSD(FSD):
 
     def __init__(self):
         FSD.__init__(self)
+        # self.F_In = [list() for i in range(self.nbt)]
+        self.F_Out = [list() for i in range(self.nbt)]
 
     def next(self, symbol) :
-        if (self.currentState, symbol) in self._mu :
-            lt = self._mu[(self.currentState, symbol)]
-            self.time += 1
-            (s,a,c) = lt[0]
-            self.mem.append( (self.time, s, a, c) )
-            self.currentState = c
-            ok = True
-        else :
-            ok = False
+        ok = super().next(symbol)
         return ok
 
     def run(self, word) :
@@ -91,7 +85,7 @@ class DynaFSD(FSD):
 if __name__ == '__main__':
     print('main de FSA.py')
     fsa = FSD()
-    fsa.load(['a','b', 'c'], [1, 2, 3, 4, 5], [1], [4], [ (1,'a',3), (2,'b',3), (3,'c',4), (3,'a',5) ] )
+    fsa.loadJFLAP4File('ex.csv')
     fsa.run(['a','c'])
 
 

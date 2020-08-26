@@ -151,9 +151,12 @@ class FSD(FSA):
 			ok = False
 		return ok
 
-	def run(self, word) :
+	def setWord(self,word) :
 		self.word = word.copy()
 		self.word.reverse()
+
+	def run(self, word) :
+		self.setWord(word)
 		ok = True
 		while ( not self.end() ) and ok :
 			if len(self.word)>0:
