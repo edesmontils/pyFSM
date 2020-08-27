@@ -80,6 +80,7 @@ class DynaFSD(FSD):
 
     def next(self, symbol) :
         ok = super().next(symbol)
+        t = self.mem[:1]
         return ok
 
     def run(self, word) :
